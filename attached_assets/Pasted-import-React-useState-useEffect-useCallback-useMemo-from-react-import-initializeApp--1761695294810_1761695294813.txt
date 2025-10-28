@@ -1,0 +1,825 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInAnonymously, 
+  signInWithCustomToken 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  onSnapshot, 
+  query, 
+  where,
+  addDoc,
+  serverTimestamp,
+  updateDoc
+} from 'firebase/firestore';
+
+// --- Firebase Configuration ---
+// These global variables are provided by the environment.
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- Constants ---
+const COLLECTIONS = {
+  USERS_PRIVATE: 'user_details', // Stores private data like addresses
+  USERS_PUBLIC: 'users_public',   // Stores public-facing profiles
+  MEETINGS: 'meetings'            // Stores scheduled/completed meetings
+};
+
+// --- Helper Functions ---
+/**
+ * Gets the path for a user's private data.
+ * @param {string} userId - The user's ID.
+ * @returns {string} The Firestore collection path.
+ */
+const getUserPrivateAddressDocPath = (userId) => {
+  if (!userId) return null;
+  // Path: artifacts/{appId}/users/{userId}/user_details/delivery_info
+  return `artifacts/${appId}/users/${userId}/${COLLECTIONS.USERS_PRIVATE}/delivery_info`;
+};
+
+/**
+ * Gets the path for all public user profiles.
+ * @returns {string} The Firestore collection path.
+ */
+const getPublicProfilesCollectionPath = () => {
+  // Path: artifacts/{appId}/public/data/users_public
+  return `artifacts/${appId}/public/data/${COLLECTIONS.USERS_PUBLIC}`;
+};
+
+/**
+ * Gets the path for a single public user profile.
+ * @param {string} userId - The user's ID.
+ * @returns {string} The Firestore document path.
+ */
+const getPublicProfileDocPath = (userId) => {
+  if (!userId) return null;
+  // Path: artifacts/{appId}/public/data/users_public/{userId}
+  return `artifacts/${appId}/public/data/${COLLECTIONS.USERS_PUBLIC}/${userId}`;
+};
+
+/**
+ * Gets the path for all public meetings.
+ * @returns {string} The Firestore collection path.
+ */
+const getMeetingsCollectionPath = () => {
+  // Path: artifacts/{appId}/public/data/meetings
+  return `artifacts/${appId}/public/data/${COLLECTIONS.MEETINGS}`;
+};
+
+/**
+ * Gets the path for a single public meeting.
+ * @param {string} meetingId - The meeting's ID.
+ * @returns {string} The Firestore document path.
+ */
+const getMeetingDocPath = (meetingId) => {
+  if (!meetingId) return null;
+  // Path: artifacts/{appId}/public/data/meetings/{meetingId}
+  return `artifacts/${appId}/public/data/${COLLECTIONS.MEETINGS}/${meetingId}`;
+};
+
+
+// --- Components ---
+
+/**
+ * Loading Spinner Component
+ */
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-full">
+    <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent border-solid rounded-full animate-spin"></div>
+  </div>
+);
+
+/**
+ * Header and Navigation Component
+ */
+const Header = ({ userId, onNavigate }) => {
+  const [meetings, setMeetings] = useState([]);
+
+  // Listen for upcoming meetings (as sponsor or recipient)
+  useEffect(() => {
+    if (!userId) return;
+
+    const meetingsPath = getMeetingsCollectionPath();
+    if (!meetingsPath) return;
+
+    const sponsorQuery = query(collection(db, meetingsPath), where("sponsor.id", "==", userId), where("status", "==", "scheduled"));
+    const recipientQuery = query(collection(db, meetingsPath), where("recipient.id", "==", userId), where("status", "==", "scheduled"));
+
+    const unsubSponsor = onSnapshot(sponsorQuery, (snapshot) => {
+      setMeetings(prev => [...prev.filter(m => m.sponsor.id !== userId), ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
+    }, (err) => {
+      console.error("Error in Header sponsorQuery:", err); // Added error handling
+    });
+    
+    const unsubRecipient = onSnapshot(recipientQuery, (snapshot) => {
+      setMeetings(prev => [...prev.filter(m => m.recipient.id !== userId), ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
+    }, (err) => {
+      console.error("Error in Header recipientQuery:", err); // Added error handling
+    });
+
+    return () => {
+      unsubSponsor();
+      unsubRecipient();
+    };
+  }, [userId]);
+
+  return (
+    <nav className="bg-white shadow-md p-4 flex justify-between items-center w-full rounded-lg">
+      <div 
+        className="text-2xl font-bold text-blue-600 cursor-pointer"
+        onClick={() => onNavigate('home')}
+      >
+        HappenstanceMeet
+      </div>
+      <div className="flex items-center space-x-4">
+        <button onClick={() => onNavigate('home')} className="text-gray-600 hover:text-blue-500">Home</button>
+        <button onClick={() => onNavigate('browse')} className="text-gray-600 hover:text-blue-500">Browse</button>
+        <button onClick={() => onNavigate('profile')} className="text-gray-600 hover:text-blue-500">Profile</button>
+        <div className="relative">
+          <button onClick={() => onNavigate('meetings')} className="text-gray-600 hover:text-blue-500">
+            Meetings
+          </button>
+          {meetings.length > 0 && (
+            <span className="absolute top-0 right-0 -mt-2 -mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+              {meetings.length}
+            </span>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+/**
+ * Home Page Component
+ */
+const HomePage = ({ onNavigate }) => (
+  <div className="text-center p-8">
+    <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome to HappenstanceMeet</h1>
+    <p className="text-lg text-gray-600 mb-6">
+      Connect with someone new. Sponsor a coffee or a meal, and share a moment of human connection through a one-on-one video call.
+    </p>
+    <p className="text-gray-500 mb-8">This is a place to find companionship, share a story, and brighten someone's day.</p>
+    <button 
+      onClick={() => onNavigate('browse')}
+      className="bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 transform hover:scale-105"
+    >
+      Meet Someone New
+    </button>
+  </div>
+);
+
+/**
+ * Profile Page Component
+ */
+const ProfilePage = ({ userId }) => {
+  const [bio, setBio] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState('');
+
+  const publicProfilePath = useMemo(() => getPublicProfileDocPath(userId), [userId]);
+  const privateProfilePath = useMemo(() => {
+    // This now directly gets the correct document path
+    return getUserPrivateAddressDocPath(userId);
+  }, [userId]);
+
+  // Load profile data
+  useEffect(() => {
+    if (!userId || !publicProfilePath || !privateProfilePath) return;
+
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        // Load public bio
+        const publicDocRef = doc(db, publicProfilePath);
+        const publicSnap = await getDoc(publicDocRef);
+        if (isMounted && publicSnap.exists()) {
+          setBio(publicSnap.data().bio || '');
+        }
+
+        // Load private address
+        const privateDocRef = doc(db, privateProfilePath);
+        const privateSnap = await getDoc(privateDocRef);
+        if (isMounted && privateSnap.exists()) {
+          setDeliveryAddress(privateSnap.data().address || '');
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        if (isMounted) setMessage("Error: Could not load profile.");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadData();
+    return () => { isMounted = false; };
+  }, [userId, publicProfilePath, privateProfilePath]);
+
+  const handleSave = async () => {
+    if (!userId || !publicProfilePath || !privateProfilePath) {
+      setMessage("Error: Not authenticated.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage('');
+    try {
+      // Save public bio
+      const publicDocRef = doc(db, publicProfilePath);
+      await setDoc(publicDocRef, { bio: bio, uid: userId }, { merge: true });
+
+      // Save private address
+      const privateDocRef = doc(db, privateProfilePath);
+      await setDoc(privateDocRef, { address: deliveryAddress }, { merge: true });
+
+      setMessage("Profile saved successfully!");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      setMessage("Error: Could not save profile.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!userId) return <p className="text-red-500">You must be logged in to see your profile.</p>;
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Your Profile</h2>
+      <p className="text-sm text-gray-500 mb-2">Your User ID: {userId}</p>
+      
+      {message && (
+        <div className={`p-3 rounded-md mb-4 ${message.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {message}
+        </div>
+      )}
+
+      <div className="mb-4">
+        <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+          Your Public Bio
+        </label>
+        <textarea
+          id="bio"
+          rows="4"
+          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Tell others a bit about yourself..."
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+        ></textarea>
+        <p className="text-xs text-gray-500 mt-1">This bio will be visible to other users.</p>
+      </div>
+
+      <div className="mb-6">
+        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+          Your Private Delivery Address
+        </label>
+        <textarea
+          id="address"
+          rows="3"
+          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          placeholder="e.g., 123 Main St, Anytown, USA 12345"
+          value={deliveryAddress}
+          onChange={(e) => setDeliveryAddress(e.target.value)}
+        ></textarea>
+        <p className="text-xs text-gray-500 mt-1">
+          <strong className="text-red-600">This is 100% private.</strong> It will only be used to order food if you accept a sponsorship. No other user will ever see this.
+        </p>
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={isLoading}
+        className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400"
+      >
+        {isLoading ? 'Saving...' : 'Save Profile'}
+      </button>
+    </div>
+  );
+};
+
+/**
+ * Browse Page Component
+ */
+const BrowsePage = ({ currentUserId, onNavigate }) => {
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const publicProfilesPath = useMemo(() => getPublicProfilesCollectionPath(), []);
+
+  useEffect(() => {
+    if (!publicProfilesPath) {
+      setError("Could not determine database path.");
+      setIsLoading(false);
+      return;
+    }
+
+    const q = query(collection(db, publicProfilesPath));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const usersList = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(user => user.id !== currentUserId); // Filter out the current user
+      setUsers(usersList);
+      setIsLoading(false);
+    }, (err) => {
+      console.error("Error fetching users:", err);
+      setError("Could not fetch users. Please try again later.");
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [currentUserId, publicProfilesPath]);
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">Meet Someone New</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {users.length === 0 && (
+          <p className="text-gray-500">No other users have created a public profile yet.</p>
+        )}
+        {users.map(user => (
+          <div key={user.id} className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+            <div>
+              <p className="text-gray-700 text-base mb-4">{user.bio || "This user hasn't written a bio yet."}</p>
+            </div>
+            <button
+              onClick={() => onNavigate('sponsor', { recipient: user })}
+              className="mt-4 w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md shadow-lg hover:bg-green-600 transition duration-300"
+            >
+              Sponsor a Meal
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Sponsorship Modal / Page Component
+ */
+const SponsorPage = ({ sponsor, recipient, onNavigate }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleSponsor = async () => {
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      // 1. MOCK PAYMENT (In real life, this is where Stripe/PayPal API call would go)
+      console.log(`MOCK PAYMENT: User ${sponsor.id} is paying $20 for ${recipient.id}`);
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+      console.log("MOCK PAYMENT: Success!");
+
+      // 2. Create the meeting document in Firestore
+      const meetingsPath = getMeetingsCollectionPath();
+      if (!meetingsPath) throw new Error("Could not get meetings path.");
+      
+      const newMeeting = {
+        sponsor: {
+          id: sponsor.id,
+          bio: sponsor.bio || ''
+        },
+        recipient: {
+          id: recipient.id,
+          bio: recipient.bio || ''
+        },
+        status: 'scheduled', // 'scheduled', 'food_ordered', 'completed', 'reported'
+        createdAt: serverTimestamp(),
+        scheduledTime: new Date(Date.now() + 15 * 60 * 1000) // Mock: 15 mins from now
+      };
+
+      const docRef = await addDoc(collection(db, meetingsPath), newMeeting);
+      
+      setMessage("Sponsorship successful! Your meeting is scheduled.");
+      
+      // 3. Navigate to the new meeting
+      setTimeout(() => {
+        onNavigate('meeting', { meetingId: docRef.id });
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error creating sponsorship:", error);
+      setMessage("Error: Could not complete sponsorship.");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl text-center">
+      <h2 className="text-2xl font-bold mb-4">Sponsor a Meal</h2>
+      <p className="text-gray-600 mb-6">
+        You are about to sponsor a $20 meal or coffee for a user with the bio:
+      </p>
+      <blockquote className="bg-gray-100 p-4 rounded-md italic text-gray-700 mb-6">
+        "{recipient.bio || 'No bio provided.'}"
+      </blockquote>
+      
+      {message && (
+        <div className={`p-3 rounded-md mb-4 ${message.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {message}
+        </div>
+      )}
+
+      <button
+        onClick={handleSponsor}
+        disabled={isLoading}
+        className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-md shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400"
+      >
+        {isLoading ? 'Processing Payment...' : 'Confirm $20 Sponsorship'}
+      </button>
+      <button
+        onClick={() => onNavigate('browse')}
+        disabled={isLoading}
+        className="w-full mt-2 text-gray-600 font-medium py-2 px-4 rounded-md hover:bg-gray-100 transition duration-300"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+};
+
+/**
+ * Meeting List Page
+ */
+const MeetingsListPage = ({ userId, onNavigate }) => {
+  const [meetings, setMeetings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!userId) {
+      setIsLoading(false);
+      setError("You must be logged in to see meetings.");
+      return;
+    }
+
+    const meetingsPath = getMeetingsCollectionPath();
+    if (!meetingsPath) {
+      setIsLoading(false);
+      setError("Could not find meetings path.");
+      return;
+    }
+    
+    const q = query(collection(db, meetingsPath), 
+      where("participantIds", "array-contains", userId)
+    );
+    
+    // Fallback: More complex query since array-contains-any is not available for two fields
+    // This is less efficient, but necessary.
+    
+    const sponsorQuery = query(collection(db, meetingsPath), where("sponsor.id", "==", userId));
+    const recipientQuery = query(collection(db, meetingsPath), where("recipient.id", "==", userId));
+
+    let sponsorMeetings = [];
+    let recipientMeetings = [];
+    let combinedMeetings = {};
+
+    const updateCombinedMeetings = () => {
+      combinedMeetings = {};
+      [...sponsorMeetings, ...recipientMeetings].forEach(meeting => {
+        combinedMeetings[meeting.id] = meeting;
+      });
+      setMeetings(Object.values(combinedMeetings).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)));
+    };
+
+    const unsubSponsor = onSnapshot(sponsorQuery, (snapshot) => {
+      sponsorMeetings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updateCombinedMeetings();
+      setIsLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError("Could not load your meetings.");
+      setIsLoading(false);
+    });
+
+    const unsubRecipient = onSnapshot(recipientQuery, (snapshot) => {
+      recipientMeetings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updateCombinedMeetings();
+      setIsLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError("Could not load your meetings.");
+      setIsLoading(false);
+    });
+
+    return () => {
+      unsubSponsor();
+      unsubRecipient();
+    };
+
+  }, [userId]);
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  return (
+    <div className="max-w-3xl mx-auto p-6">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">Your Meetings</h2>
+      {meetings.length === 0 ? (
+        <p className="text-gray-500">You have no scheduled meetings.</p>
+      ) : (
+        <div className="space-y-4">
+          {meetings.map(meeting => {
+            const isSponsor = meeting.sponsor.id === userId;
+            const otherUser = isSponsor ? meeting.recipient : meeting.sponsor;
+            const role = isSponsor ? "Sponsor" : "Recipient";
+
+            return (
+              <div key={meeting.id} className="bg-white p-5 rounded-lg shadow-md flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-500">You are the <span className="font-bold">{role}</span></p>
+                  <p className="text-lg font-medium text-gray-800">Meeting with user:</p>
+                  <p className="text-gray-600 italic">"{otherUser.bio.substring(0, 50)}..."</p>
+                  <p className="text-sm text-gray-500 mt-2">Status: <span className="font-medium text-blue-600">{meeting.status}</span></p>
+                </div>
+                <button
+                  onClick={() => onNavigate('meeting', { meetingId: meeting.id })}
+                  className="bg-blue-600 text-white font-bold py-2 px-4 rounded-md shadow-lg hover:bg-blue-700 transition duration-300"
+                >
+                  Join Call
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+/**
+ * Mock Video Call Page
+ */
+const MeetingPage = ({ userId, meetingId }) => {
+  const [meeting, setMeeting] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState('');
+
+  const meetingPath = useMemo(() => getMeetingDocPath(meetingId), [meetingId]);
+
+  useEffect(() => {
+    if (!meetingPath) {
+      setError("Invalid meeting ID.");
+      setIsLoading(false);
+      return;
+    }
+    const unsub = onSnapshot(doc(db, meetingPath), (doc) => {
+      if (doc.exists()) {
+        setMeeting({ id: doc.id, ...doc.data() });
+      } else {
+        setError("Meeting not found.");
+      }
+      setIsLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError("Error loading meeting.");
+      setIsLoading(false);
+    });
+    return () => unsub();
+  }, [meetingPath]);
+
+  const handleOrderFood = async () => {
+    setMessage('');
+    // 1. Get user's private address
+    const privateProfilePath = `${getUserPrivateCollectionPath(userId)}/address`;
+    if (!privateProfilePath) {
+      setMessage("Error: Could not find your profile path.");
+      return;
+    }
+    
+    try {
+      const docRef = doc(db, privateProfilePath);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists() || !docSnap.data().address) {
+        setMessage("Error: You must set your delivery address in your profile first!");
+        return;
+      }
+      
+      const address = docSnap.data().address;
+
+      // 2. MOCK API CALL to DoorDash/UberEats
+      console.log(`MOCK DELIVERY API: Ordering $20 meal...`);
+      console.log(`MOCK DELIVERY API: Recipient Address: ${address}`);
+      setMessage("Simulating order... this can take a moment.");
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
+      console.log("MOCK DELIVERY API: Order Confirmed!");
+
+      // 3. Update meeting status
+      const meetingDocRef = doc(db, meetingPath);
+      await updateDoc(meetingDocRef, { status: "food_ordered" });
+      
+      setMessage("Food has been ordered! Enjoy your call.");
+
+    } catch (err) {
+      console.error("Error ordering food:", err);
+      setMessage("Error: Could not place food order.");
+    }
+  };
+
+  const handleReportNoShow = async () => {
+    setMessage("Reporting no-show...");
+    try {
+      const meetingDocRef = doc(db, meetingPath);
+      await updateDoc(meetingDocRef, { status: "reported_no_show" });
+      setMessage("User reported. Our trust & safety team will review this. We apologize for the inconvenience.");
+      // In a real app, this would trigger a backend function
+      // to refund/credit the sponsor and flag the recipient's account.
+    } catch (err) {
+      console.error("Error reporting:", err);
+      setMessage("Error: Could not submit report.");
+    }
+  };
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <p className="text-red-500">{error}</p>;
+  if (!meeting) return <p>No meeting data.</p>;
+
+  const isSponsor = meeting.sponsor.id === userId;
+  const isRecipient = meeting.recipient.id === userId;
+  const otherUser = isSponsor ? meeting.recipient : meeting.sponsor;
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-2xl">
+      <h2 className="text-2xl font-bold mb-2">Video Call with {otherUser.id.substring(0, 8)}...</h2>
+      <p className="text-gray-600 mb-4">Status: <span className="font-medium text-blue-600">{meeting.status}</span></p>
+
+      {message && (
+        <div className={`p-3 rounded-md mb-4 ${message.startsWith('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {message}
+        </div>
+      )}
+
+      {/* Mock Video Area */}
+      <div className="w-full bg-gray-900 aspect-video rounded-lg flex items-center justify-center text-gray-400 mb-4">
+        <p>Mock Video Call Area</p>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Recipient Controls */}
+        {isRecipient && (
+          <button
+            onClick={handleOrderFood}
+            disabled={meeting.status !== 'scheduled'}
+            className="bg-green-500 text-white font-bold py-3 px-6 rounded-md shadow-lg hover:bg-green-600 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {meeting.status === 'scheduled' ? 'Order Your Meal (100% Private)' : 'Food Ordered'}
+          </button>
+        )}
+
+        {/* Sponsor Controls */}
+        {isSponsor && (
+          <button
+            onClick={handleReportNoShow}
+            disabled={meeting.status === 'reported_no_show'}
+            className="bg-red-600 text-white font-bold py-3 px-6 rounded-md shadow-lg hover:bg-red-700 transition duration-300 disabled:bg-gray-400"
+          >
+            {meeting.status === 'reported_no_show' ? 'Reported' : 'Report No-Show'}
+          </button>
+        )}
+
+        <button
+          onClick={() => {}}
+          className="bg-gray-500 text-white font-bold py-3 px-6 rounded-md shadow-lg hover:bg-gray-600 transition duration-300"
+        >
+          Leave Call
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+/**
+ * Main App Component
+ */
+export default function App() {
+  const [userId, setUserId] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home');
+  const [pageProps, setPageProps] = useState({});
+  const [error, setError] = useState(null);
+
+  // Handle Firebase Authentication
+  useEffect(() => {
+    const signIn = async (authInstance) => {
+      try {
+        if (initialAuthToken) {
+          await signInWithCustomToken(authInstance, initialAuthToken);
+        } else {
+          await signInAnonymously(authInstance);
+        }
+      } catch (err) {
+        console.error("Firebase sign-in error:", err);
+        setError("Could not authenticate. Please refresh.");
+      }
+    };
+    
+    signIn(auth);
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+      }
+      setIsAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch current user's public profile
+  useEffect(() => {
+    if (!userId) {
+      setUserProfile(null);
+      return;
+    }
+    const publicProfilePath = getPublicProfileDocPath(userId);
+    if (!publicProfilePath) return;
+
+    const unsub = onSnapshot(doc(db, publicProfilePath), (doc) => {
+      if (doc.exists()) {
+        setUserProfile({ id: doc.id, ...doc.data() });
+      } else {
+        setUserProfile({ id: userId }); // New user
+      }
+    }, (err) => {
+      console.error("Error fetching user profile:", err);
+    });
+    
+    return () => unsub();
+  }, [userId]);
+
+
+  const handleNavigate = (page, props = {}) => {
+    setCurrentPage(page);
+    setPageProps(props);
+  };
+
+  const renderPage = () => {
+    if (!isAuthReady || (userId && !userProfile)) {
+      return <LoadingSpinner />;
+    }
+    
+    if (error) {
+      return <p className="text-red-500 text-center">{error}</p>;
+    }
+
+    switch (currentPage) {
+      case 'home':
+        return <HomePage onNavigate={handleNavigate} />;
+      case 'profile':
+        return <ProfilePage userId={userId} />;
+      case 'browse':
+        return <BrowsePage currentUserId={userId} onNavigate={handleNavigate} />;
+      case 'sponsor':
+        return <SponsorPage sponsor={userProfile} recipient={pageProps.recipient} onNavigate={handleNavigate} />;
+      case 'meetings':
+        return <MeetingsListPage userId={userId} onNavigate={handleNavigate} />;
+      case 'meeting':
+        return <MeetingPage userId={userId} meetingId={pageProps.meetingId} />;
+      default:
+        return <HomePage onNavigate={handleNavigate} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-inter p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <Header userId={userId} onNavigate={handleNavigate} />
+        <main className="mt-8">
+          {renderPage()}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+
+
