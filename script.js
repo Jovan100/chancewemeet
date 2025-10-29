@@ -161,6 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    console.log('%c🎉 Welcome to ConnectCafe! 🎉', 'color: #3d8b5e; font-size: 20px; font-weight: bold;');
+    console.log('%c🎉 Welcome to ChanceWeMeet! 🎉', 'color: #3d8b5e; font-size: 20px; font-weight: bold;');
     console.log('%cConnecting lonely hearts, one coffee at a time ☕', 'color: #0288d1; font-size: 14px;');
 });

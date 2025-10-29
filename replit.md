@@ -1,7 +1,7 @@
-# ConnectCafe - Virtual Connection Platform
+# ChanceWeMeet - Virtual Connection Platform
 
 ## Overview
-ConnectCafe is a beautiful, modern static website for a social connection platform designed to help lonely people across all demographics connect through sponsored virtual coffee/meal dates. The site showcases the concept with glossy design, smooth animations, and authentic photography of real people connecting in beautiful settings.
+ChanceWeMeet (www.chancewemeet.com) is a beautiful, modern static website for a social connection platform designed to help lonely people across all demographics connect through sponsored virtual coffee/meal dates. The site showcases the concept with glossy design, smooth animations, and authentic photography of real people connecting in beautiful settings.
 
 ## Project Structure
 This is a **simple static website** with:
@@ -62,6 +62,7 @@ Based on color psychology for connection platforms helping people with lonelines
 The colors create a calming, nature-inspired, uplifting backdrop that promotes stability and well-being.
 
 ## Recent Changes
+- **2025-10-29**: Updated branding from ConnectCafe to ChanceWeMeet (www.chancewemeet.com)
 - **2025-10-29**: Replaced cartoonish SVG mockups with beautiful real photography showing people connecting in parks, cafes, and university settings - much more authentic and welcoming
 - **2025-10-29**: Darkened color palette for better visual presence while maintaining calming tones
 - **2025-10-29**: Updated entire color palette from purple to calming sage green, sky blue, and peach tones based on color psychology feedback for better emotional support
