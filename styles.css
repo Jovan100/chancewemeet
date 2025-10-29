@@ -502,48 +502,69 @@ body {
     background: linear-gradient(180deg, #0288d1 0%, #5a9472 100%);
 }
 
-.mockup-showcase {
+.photo-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
     margin-top: 3rem;
 }
 
-.mockup-item {
-    text-align: center;
+.photo-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
     animation: fadeInUp 0.8s ease-out backwards;
 }
 
-.mockup-item:nth-child(1) { animation-delay: 0.2s; }
-.mockup-item:nth-child(2) { animation-delay: 0.4s; }
-.mockup-item:nth-child(3) { animation-delay: 0.6s; }
+.photo-item:nth-child(1) { animation-delay: 0.1s; }
+.photo-item:nth-child(2) { animation-delay: 0.2s; }
+.photo-item:nth-child(3) { animation-delay: 0.3s; }
+.photo-item:nth-child(4) { animation-delay: 0.4s; }
+.photo-item:nth-child(5) { animation-delay: 0.5s; }
+.photo-item:nth-child(6) { animation-delay: 0.6s; }
 
-.mockup-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 1.5rem;
+.photo-item:hover {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
 }
 
-.mockup-screen {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 30px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.mockup-screen:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-}
-
-.mockup-svg {
+.photo-item img {
     width: 100%;
-    height: auto;
-    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
+    height: 350px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.photo-item:hover img {
+    transform: scale(1.1);
+}
+
+.photo-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
+    padding: 2rem 1.5rem 1.5rem;
+    color: white;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.photo-caption h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.photo-caption p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
 }
 
 .cta-section {

@@ -59,6 +59,8 @@ Based on color psychology for connection platforms helping people with lonelines
 The colors create a calming, nature-inspired, uplifting backdrop that promotes stability and well-being.
 
 ## Recent Changes
+- **2025-10-29**: Replaced cartoonish SVG mockups with beautiful real photography showing people connecting in parks, cafes, and university settings - much more authentic and welcoming
+- **2025-10-29**: Darkened color palette for better visual presence while maintaining calming tones
 - **2025-10-29**: Updated entire color palette from purple to calming sage green, sky blue, and peach tones based on color psychology feedback for better emotional support
 - **2025-10-28**: Initial project creation with full static website implementation
 
