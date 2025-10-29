@@ -5,15 +5,15 @@
 }
 
 :root {
-    --primary-gradient: linear-gradient(135deg, #a8d5ba 0%, #7ec8a3 100%);
-    --secondary-gradient: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 100%);
-    --accent-gradient: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
-    --sage-green: #a8d5ba;
-    --mint-green: #7ec8a3;
-    --sky-blue: #b3e5fc;
-    --aqua-blue: #81d4fa;
-    --peach: #ffcc80;
-    --light-peach: #ffe0b2;
+    --primary-gradient: linear-gradient(135deg, #5a9472 0%, #3d8b5e 100%);
+    --secondary-gradient: linear-gradient(135deg, #29b6f6 0%, #0288d1 100%);
+    --accent-gradient: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+    --sage-green: #5a9472;
+    --mint-green: #3d8b5e;
+    --sky-blue: #29b6f6;
+    --aqua-blue: #0288d1;
+    --peach: #ff9800;
+    --light-peach: #ffb74d;
     --dark-bg: #2c3e50;
     --light-text: #ffffff;
     --dark-text: #37474f;
@@ -29,7 +29,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
     color: #333;
-    background: linear-gradient(135deg, #b3e5fc 0%, #a8d5ba 100%);
+    background: linear-gradient(135deg, #29b6f6 0%, #5a9472 100%);
     overflow-x: hidden;
 }
 
@@ -158,7 +158,7 @@ body {
 .orb-1 {
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, #a8d5ba 0%, transparent 70%);
+    background: radial-gradient(circle, #5a9472 0%, transparent 70%);
     top: -10%;
     left: -10%;
     animation-delay: 0s;
@@ -167,7 +167,7 @@ body {
 .orb-2 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, #81d4fa 0%, transparent 70%);
+    background: radial-gradient(circle, #0288d1 0%, transparent 70%);
     bottom: -10%;
     right: -10%;
     animation-delay: 7s;
@@ -176,7 +176,7 @@ body {
 .orb-3 {
     width: 350px;
     height: 350px;
-    background: radial-gradient(circle, #ffcc80 0%, transparent 70%);
+    background: radial-gradient(circle, #ff9800 0%, transparent 70%);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -300,9 +300,9 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
+    background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
     color: white;
-    box-shadow: 0 10px 30px rgba(255, 183, 77, 0.3);
+    box-shadow: 0 10px 30px rgba(255, 152, 0, 0.4);
 }
 
 .btn-primary:hover {
@@ -351,7 +351,7 @@ body {
 
 .how-it-works {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, #a8d5ba 0%, #b3e5fc 100%);
+    background: linear-gradient(180deg, #5a9472 0%, #29b6f6 100%);
     position: relative;
 }
 
@@ -441,7 +441,7 @@ body {
 
 .features {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, #b3e5fc 0%, #81d4fa 100%);
+    background: linear-gradient(180deg, #29b6f6 0%, #0288d1 100%);
 }
 
 .features-grid {
@@ -499,7 +499,7 @@ body {
 
 .demo {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, #81d4fa 0%, #a8d5ba 100%);
+    background: linear-gradient(180deg, #0288d1 0%, #5a9472 100%);
 }
 
 .mockup-showcase {
@@ -548,7 +548,7 @@ body {
 
 .cta-section {
     padding: 5rem 2rem;
-    background: linear-gradient(180deg, #a8d5ba 0%, #7ec8a3 100%);
+    background: linear-gradient(180deg, #5a9472 0%, #3d8b5e 100%);
 }
 
 .cta-content {
