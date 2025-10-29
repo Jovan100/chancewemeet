@@ -62,6 +62,8 @@ Based on color psychology for connection platforms helping people with lonelines
 The colors create a calming, nature-inspired, uplifting backdrop that promotes stability and well-being.
 
 ## Recent Changes
+- **2025-10-29**: Added custom Central Park chess scene as hero background image showing intergenerational connection
+- **2025-10-29**: Replaced chess park photo with custom coffee shop conversation scene showing young and old enjoying cafe moments
 - **2025-10-29**: Updated branding from ConnectCafe to ChanceWeMeet (www.chancewemeet.com)
 - **2025-10-29**: Replaced cartoonish SVG mockups with beautiful real photography showing people connecting in parks, cafes, and university settings - much more authentic and welcoming
 - **2025-10-29**: Darkened color palette for better visual presence while maintaining calming tones
