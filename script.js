@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentScrollY = window.scrollY;
         
         if (currentScrollY > 100) {
-            navbar.style.background = 'rgba(102, 126, 234, 0.95)';
+            navbar.style.background = 'rgba(168, 213, 186, 0.95)';
             navbar.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
         } else {
             navbar.style.background = 'rgba(255, 255, 255, 0.1)';
@@ -171,6 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    console.log('%c🎉 Welcome to ConnectCafe! 🎉', 'color: #667eea; font-size: 20px; font-weight: bold;');
-    console.log('%cConnecting lonely hearts, one coffee at a time ☕', 'color: #764ba2; font-size: 14px;');
+    console.log('%c🎉 Welcome to ConnectCafe! 🎉', 'color: #7ec8a3; font-size: 20px; font-weight: bold;');
+    console.log('%cConnecting lonely hearts, one coffee at a time ☕', 'color: #81d4fa; font-size: 14px;');
 });

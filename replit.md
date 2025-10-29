@@ -51,11 +51,15 @@ The website is designed to be:
 6. **Footer** - Links and information
 
 ## Color Palette
-- Primary Gradient: Purple (#667eea) to Dark Purple (#764ba2)
-- Secondary Gradient: Pink (#f093fb) to Red (#f5576c)
-- Accent Gradient: Blue (#4facfe) to Cyan (#00f2fe)
+Based on color psychology for connection platforms helping people with loneliness and depression:
+- Primary Gradient: Soft Sage Green (#a8d5ba) to Mint Green (#7ec8a3) - promotes calm, growth, and balance
+- Secondary Gradient: Airy Sky Blue (#b3e5fc) to Aqua Blue (#81d4fa) - conveys trust, serenity, and peace
+- Accent Gradient: Light Peach (#ffe0b2) to Warm Peach (#ffcc80) - adds optimism and warmth
+
+The colors create a calming, nature-inspired, uplifting backdrop that promotes stability and well-being.
 
 ## Recent Changes
+- **2025-10-29**: Updated entire color palette from purple to calming sage green, sky blue, and peach tones based on color psychology feedback for better emotional support
 - **2025-10-28**: Initial project creation with full static website implementation
 
 ## User Preferences
