@@ -1,7 +1,7 @@
 # ConnectCafe - Virtual Connection Platform
 
 ## Overview
-ConnectCafe is a beautiful, modern static website for a social connection platform designed to help lonely people across all demographics connect through sponsored virtual coffee/meal dates. The site showcases the concept with glossy design, smooth animations, and SVG mockup screenshots.
+ConnectCafe is a beautiful, modern static website for a social connection platform designed to help lonely people across all demographics connect through sponsored virtual coffee/meal dates. The site showcases the concept with glossy design, smooth animations, and authentic photography of real people connecting in beautiful settings.
 
 ## Project Structure
 This is a **simple static website** with:
@@ -14,10 +14,13 @@ This is a **simple static website** with:
 ## Key Features
 - Modern glassmorphism UI design with gradient backgrounds
 - Smooth micro-animations and transitions
-- SVG mockup screenshots showing:
-  - Profile creation interface
-  - Browse profiles grid
-  - Video call connection screen
+- Real photo gallery showing:
+  - People playing chess in parks
+  - Italian outdoor cafe moments
+  - University campus connections
+  - Beautiful park landscapes
+  - Diverse people of all ages
+  - Virtual coffee video chats
 - Responsive design for all devices
 - Smooth scroll navigation
 - Animated statistics counter
@@ -27,7 +30,7 @@ This is a **simple static website** with:
 - Pure HTML5
 - Vanilla CSS3 (animations, transitions, glassmorphism)
 - Vanilla JavaScript (ES6+)
-- SVG graphics for mockups
+- Real stock photography
 
 ## Running the Project
 The project runs on port 5000 using Python's built-in HTTP server:
@@ -40,13 +43,13 @@ The website is designed to be:
 - **Simple** - No dependencies or build tools
 - **Modern** - Glossy gradients and smooth animations
 - **Welcoming** - Targeting all demographics seeking connection
-- **Visual** - SVG mockups demonstrate the user journey
+- **Visual** - Authentic photos demonstrate real connection moments
 
 ## Sections
 1. **Hero** - Eye-catching gradient background with animated orbs and compelling headline
 2. **How It Works** - Three-step process with SVG icons
 3. **Features** - Six key benefits with emoji icons
-4. **Demo** - Three SVG mockup screenshots showing the complete user flow
+4. **Demo** - Real photo gallery showing people connecting in beautiful settings
 5. **CTA Section** - Final call-to-action to get started
 6. **Footer** - Links and information
 
@@ -69,4 +72,4 @@ The colors create a calming, nature-inspired, uplifting backdrop that promotes s
 - Static HTML/CSS/JS only
 - Modern and glossy design
 - Micro-animations throughout
-- SVG mockup screenshots for demonstration
+- Real photography showing diverse people in natural connection settings (parks, cafes, university quads)

@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.btn');
     const featureCards = document.querySelectorAll('.feature-card');
     const steps = document.querySelectorAll('.step');
-    const mockupItems = document.querySelectorAll('.mockup-item');
+    const photoItems = document.querySelectorAll('.photo-item');
 
     let lastScrollY = window.scrollY;
 
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, observerOptions);
 
-    [...featureCards, ...steps, ...mockupItems].forEach(element => {
+    [...featureCards, ...steps, ...photoItems].forEach(element => {
         observer.observe(element);
     });
 
@@ -152,16 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    const mockupScreens = document.querySelectorAll('.mockup-screen');
-    mockupScreens.forEach(screen => {
-        screen.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.05) translateY(-10px)';
-        });
-        
-        screen.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1) translateY(0)';
-        });
-    });
 
     const logo = document.querySelector('.logo');
     logo.addEventListener('click', () => {
